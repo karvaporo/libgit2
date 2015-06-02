@@ -1489,13 +1489,11 @@ static int blob_content_to_file(
 	if (error < 0)
 		return error;
 
-	if (GIT_PERMS_IS_EXEC(mode)) {
-		data->perfdata.chmod_calls++;
+	data->perfdata.chmod_calls++;
 
-		if ((error = p_chmod(path, mode)) < 0) {
-			giterr_set(GITERR_OS, "Failed to set permissions on '%s'", path);
-			return error;
-		}
+	if ((error = p_chmod(path, mode)) < 0) {
+		giterr_set(GITERR_OS, "Failed to set permissions on '%s'", path);
+		return error;
 	}
 
 	if (st) {
