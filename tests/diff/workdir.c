@@ -10,6 +10,30 @@ void test_diff_workdir__cleanup(void)
 	cl_git_sandbox_cleanup();
 }
 
+void test_diff_workdir__to_index_issue(void)
+{
+	git_diff_options opts = GIT_DIFF_OPTIONS_INIT;
+	git_diff *diff = NULL;
+	git_index *index = NULL;
+
+	g_repo = cl_git_sandbox_init("empty_standard_repo");
+
+	cl_git_mkfile("empty_standard_repo/file", "1");
+
+	cl_git_pass(git_repository_index(&index, g_repo));
+	cl_git_pass(git_index_add_bypath(index, "file"));
+	git_index_free(index);
+
+	cl_git_rewritefile("empty_standard_repo/file", "2");
+
+	opts.flags |= GIT_DIFF_INCLUDE_IGNORED | GIT_DIFF_INCLUDE_UNTRACKED;
+
+	cl_git_pass(git_diff_index_to_workdir(&diff, g_repo, NULL, &opts));
+	cl_assert_equal_i(1, git_diff_num_deltas(diff));
+
+	git_diff_free(diff);
+}
+
 void test_diff_workdir__to_index(void)
 {
 	git_diff_options opts = GIT_DIFF_OPTIONS_INIT;
