@@ -102,6 +102,9 @@ void test_status_worktree__empty_repository(void)
 
 void test_status_worktree__status_issue(void)
 {
+	git_oid tree_id, commit_id;
+	git_signature *sig;
+	git_tree *tree;
 	git_index *index;
 	git_status_list *status_list;
 	git_status_options opts = GIT_STATUS_OPTIONS_INIT;
@@ -110,11 +113,22 @@ void test_status_worktree__status_issue(void)
 	cl_git_mkfile("empty_standard_repo/file", "1");
 	cl_must_pass(git_repository_index(&index, repo));
 	cl_must_pass(git_index_add_bypath(index, "file"));
+	cl_must_pass(git_index_write_tree(&tree_id, index));
+	cl_must_pass(git_tree_lookup(&tree, repo, &tree_id));
+	cl_must_pass(git_signature_now(&sig, "No Name", "noname@example.com"));
+	cl_must_pass(git_commit_create(&commit_id, repo, "HEAD", sig, sig, NULL, "Initial commit.", tree, 0, NULL));
 	cl_git_rewritefile("empty_standard_repo/file", "2");
+	cl_must_pass(git_index_add_bypath(index, "file"));
+	cl_must_pass(git_index_write(index));
+	git_tree_free(tree);
+	git_signature_free(sig);
+	git_index_free(index);
+	cl_git_rewritefile("empty_standard_repo/file", "3");
 	opts.flags = GIT_STATUS_OPT_DEFAULTS;
 	opts.show = GIT_STATUS_SHOW_WORKDIR_ONLY;
 	cl_must_pass(git_status_list_new(&status_list, repo, &opts));
 	cl_assert_equal_i(1, git_status_list_entrycount(status_list));
+	git_status_list_free(status_list);
 }
 
 static int remove_file_cb(void *data, git_buf *file)
