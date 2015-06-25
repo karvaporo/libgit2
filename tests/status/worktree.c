@@ -100,6 +100,23 @@ void test_status_worktree__empty_repository(void)
 	cl_assert_equal_i(0, count);
 }
 
+void test_status_worktree__status_issue(void)
+{
+	git_index *index;
+	git_status_list *status_list;
+	git_status_options opts = GIT_STATUS_OPTIONS_INIT;
+	git_repository *repo = cl_git_sandbox_init("empty_standard_repo");
+
+	cl_git_mkfile("empty_standard_repo/file", "1");
+	cl_must_pass(git_repository_index(&index, repo));
+	cl_must_pass(git_index_add_bypath(index, "file"));
+	cl_git_rewritefile("empty_standard_repo/file", "2");
+	opts.flags = GIT_STATUS_OPT_DEFAULTS;
+	opts.show = GIT_STATUS_SHOW_WORKDIR_ONLY;
+	cl_must_pass(git_status_list_new(&status_list, repo, &opts));
+	cl_assert_equal_i(1, git_status_list_entrycount(status_list));
+}
+
 static int remove_file_cb(void *data, git_buf *file)
 {
 	const char *filename = git_buf_cstr(file);
